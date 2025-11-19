@@ -1,0 +1,5 @@
+{
+  "name": "Bash Runner UI (AI Sim)",
+  "description": "A secure, simulated web interface for executing predefined Bash scripts using Gemini AI to generate realistic terminal outputs.",
+  "requestFramePermissions": []
+}
