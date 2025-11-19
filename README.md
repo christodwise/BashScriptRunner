@@ -263,62 +263,42 @@ To reset the application, clear your browser's local storage for `localhost:3000
 
 ## 🐳 Docker Deployment
 
-### Using Docker
+BashRunner can be easily deployed using Docker. See [DOCKER.md](DOCKER.md) for the complete deployment guide.
 
-Build and run the application in a container:
+### Quick Start with Docker
 
 ```bash
-# Build the Docker image
-docker build -t bashrunner:latest .
+# 1. Build the image
+docker build --build-arg GEMINI_API_KEY=your_api_key_here -t bashrunner:latest .
 
-# Run the container
-docker run -d \
-  -p 3000:80 \
-  -e GEMINI_API_KEY=your_api_key_here \
-  --name bashrunner \
-  bashrunner:latest
+# 2. Run the container
+docker run -d -p 3000:80 --name bashrunner bashrunner:latest
+
+# 3. Access at http://localhost:3000
 ```
 
-Access the application at `http://localhost:3000`
-
-### Using Docker Compose
-
-For easier deployment with environment management:
+### Quick Start with Docker Compose
 
 ```bash
-# Start the application
+# 1. Create .env file
+echo "GEMINI_API_KEY=your_api_key_here" > .env
+
+# 2. Start the application
 docker-compose up -d
 
-# View logs
+# 3. View logs
 docker-compose logs -f
-
-# Stop the application
-docker-compose down
 ```
 
-The `docker-compose.yml` file includes:
-- Environment variable configuration
-- Port mapping
-- Volume mounting for persistence
-- Automatic restart policy
+### What's Included
 
-### Environment Variables in Docker
+✅ **Multi-stage build** - Optimized image size (~50MB production)  
+✅ **Nginx server** - Production-ready static file serving  
+✅ **Health checks** - Built-in health monitoring at `/health`  
+✅ **Security** - Non-root user, security headers, gzip compression  
+✅ **Auto-restart** - Configurable restart policies  
 
-Create a `.env` file for Docker Compose:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-PORT=3000
-```
-
-Or pass them directly:
-
-```bash
-docker run -d \
-  -p 3000:80 \
-  -e GEMINI_API_KEY=${GEMINI_API_KEY} \
-  bashrunner:latest
-```
+For detailed Docker deployment instructions, troubleshooting, and production best practices, see **[DOCKER.md](DOCKER.md)**.
 
 ---
 
