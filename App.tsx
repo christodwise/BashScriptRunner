@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import ScriptRunner from './components/ScriptRunner';
 import HistoryLog from './components/HistoryLog';
-import { TerminalIcon, HistoryIcon, LogOutIcon } from './components/Icons';
-import { ExecutionLog } from './types';
+import ScriptManager from './components/ScriptManager';
+import { TerminalIcon, HistoryIcon, LogOutIcon, SettingsIcon } from './components/Icons';
+import { ExecutionLog, ScriptDefinition } from './types';
+import { PREDEFINED_SCRIPTS } from './constants';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'runner' | 'history'>('runner');
+  const [activeTab, setActiveTab] = useState<'runner' | 'history' | 'manager'>('runner');
   const [executionLogs, setExecutionLogs] = useState<ExecutionLog[]>([]);
+  const [customScripts, setCustomScripts] = useState<ScriptDefinition[]>([]);
 
-  // Load logs from local storage on mount
+  // Load logs and custom scripts from local storage on mount
   useEffect(() => {
     const savedLogs = localStorage.getItem('bashRunnerLogs');
     if (savedLogs) {
@@ -19,6 +22,15 @@ function App() {
         setExecutionLogs(JSON.parse(savedLogs));
       } catch (e) {
         console.error("Failed to load logs", e);
+      }
+    }
+
+    const savedScripts = localStorage.getItem('bashRunnerCustomScripts');
+    if (savedScripts) {
+      try {
+        setCustomScripts(JSON.parse(savedScripts));
+      } catch (e) {
+        console.error("Failed to load custom scripts", e);
       }
     }
   }, []);
@@ -29,6 +41,11 @@ function App() {
       localStorage.setItem('bashRunnerLogs', JSON.stringify(executionLogs));
     }
   }, [executionLogs]);
+
+  // Save custom scripts to local storage
+  useEffect(() => {
+    localStorage.setItem('bashRunnerCustomScripts', JSON.stringify(customScripts));
+  }, [customScripts]);
 
   const handleLogin = (username: string) => {
     setUser(username);
@@ -44,6 +61,17 @@ function App() {
   const handleExecutionComplete = (log: ExecutionLog) => {
     setExecutionLogs(prev => [log, ...prev]);
   };
+
+  const handleAddScript = (script: ScriptDefinition) => {
+    setCustomScripts(prev => [...prev, script]);
+  };
+
+  const handleDeleteScript = (id: string) => {
+    setCustomScripts(prev => prev.filter(s => s.id !== id));
+  };
+
+  // Combine predefined and custom scripts
+  const allScripts = [...PREDEFINED_SCRIPTS, ...customScripts];
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;
@@ -75,6 +103,18 @@ function App() {
             <span className="font-medium">Run Scripts</span>
           </button>
           
+          <button
+            onClick={() => setActiveTab('manager')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+              activeTab === 'manager'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <SettingsIcon className="w-5 h-5" />
+            <span className="font-medium">Manage Scripts</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('history')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
@@ -124,6 +164,12 @@ function App() {
              <TerminalIcon className="w-6 h-6" />
            </button>
            <button
+            onClick={() => setActiveTab('manager')}
+            className={`p-2 rounded-lg ${activeTab === 'manager' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}
+           >
+             <SettingsIcon className="w-6 h-6" />
+           </button>
+           <button
             onClick={() => setActiveTab('history')}
             className={`p-2 rounded-lg ${activeTab === 'history' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}
            >
@@ -140,19 +186,34 @@ function App() {
         <div className="max-w-7xl mx-auto">
           <header className="mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">
-              {activeTab === 'runner' ? 'Script Execution' : 'Audit Log'}
+              {activeTab === 'runner' && 'Script Execution'}
+              {activeTab === 'manager' && 'Manage Custom Scripts'}
+              {activeTab === 'history' && 'Audit Log'}
             </h2>
             <p className="text-slate-400">
-              {activeTab === 'runner' 
-                ? 'Select and execute predefined maintenance scripts safely.'
-                : 'Review past script executions and status reports.'
-              }
+              {activeTab === 'runner' && 'Select and execute predefined or custom maintenance scripts safely.'}
+              {activeTab === 'manager' && 'Define new scripts to be executed by the system. Changes are saved locally.'}
+              {activeTab === 'history' && 'Review past script executions and status reports.'}
             </p>
           </header>
 
           {activeTab === 'runner' && (
             <div className="animate-fadeIn">
-              <ScriptRunner onExecutionComplete={handleExecutionComplete} user={user} />
+              <ScriptRunner 
+                onExecutionComplete={handleExecutionComplete} 
+                user={user} 
+                availableScripts={allScripts}
+              />
+            </div>
+          )}
+
+          {activeTab === 'manager' && (
+            <div className="animate-fadeIn">
+              <ScriptManager 
+                customScripts={customScripts}
+                onAddScript={handleAddScript}
+                onDeleteScript={handleDeleteScript}
+              />
             </div>
           )}
 
